@@ -63,3 +63,35 @@ profile_data = {
 
 profile = GitHubProfile(profile_data)
 profile.display()
+
+#Developer Activity Analyzer
+
+def analyze_developer(profile):
+    repos = profile.repos
+    followers = profile.followers
+
+    print("\n📊 DEVELOPER ANALYSIS")
+    print("-" * 40)
+
+    if repos >= 50:
+        print("Repository Activity : 🔥 Excellent")
+    elif repos >= 20:
+        print("Repository Activity : 🚀 Strong")
+    elif repos >= 5:
+        print("Repository Activity : 👍 Growing")
+    else:
+        print("Repository Activity : 🌱 Beginner")
+
+    if followers >= 100:
+        print("Community Presence  : 🌟 Excellent")
+    elif followers >= 25:
+        print("Community Presence  : 👍 Good")
+    else:
+        print("Community Presence  : 📈 Growing")
+
+    activity_score = min(repos * 2 + followers, 100)
+
+    print(f"Developer Score     : {activity_score}/100")
+
+
+analyze_developer(profile)
