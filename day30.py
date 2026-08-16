@@ -73,6 +73,7 @@ def create_folders(folder_path):
     print("\n✅ Folder structure ready.")
     
 
+
 #-----------------Automatic File Organizer--------------------
 
 import shutil

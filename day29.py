@@ -31,7 +31,7 @@ if data:
     
     class GitHubProfile:
 
-    def __init__(self, data):
+     def __init__(self, data):
         self.name = data.get("name")
         self.username = data.get("login")
         self.repos = data.get("public_repos", 0)
