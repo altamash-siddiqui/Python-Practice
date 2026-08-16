@@ -103,3 +103,24 @@ def organize_files(folder_path):
             print(f"❌ Could not move {filename}: {error}")
 
     print(f"\n✅ {moved} files organized successfully.")
+    
+    
+#-----------------Professional Summary & Safety--------------------
+
+def show_summary(folder_path):
+    print("\n" + "=" * 65)
+    print("              ORGANIZATION SUMMARY")
+    print("=" * 65)
+
+    for category in list(FILE_CATEGORIES.keys()) + ["Others"]:
+        category_path = os.path.join(folder_path, category)
+
+        if os.path.exists(category_path):
+            count = len([
+                file for file in os.listdir(category_path)
+                if os.path.isfile(os.path.join(category_path, file))
+            ])
+
+            print(f"{category:<20} : {count} files")
+
+    print("=" * 65)
