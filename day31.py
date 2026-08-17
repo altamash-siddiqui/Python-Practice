@@ -2,20 +2,24 @@ import sqlite3
 from datetime import datetime
 
 
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
 DATABASE_NAME = "tasks.db"
 
 
-# --------------------------------------------------
+# ============================================================
 # DATABASE CONNECTION
-# --------------------------------------------------
+# ============================================================
 
 def connect_database():
     return sqlite3.connect(DATABASE_NAME)
 
 
-# --------------------------------------------------
-# CREATE TABLE
-# --------------------------------------------------
+# ============================================================
+# CREATE DATABASE TABLE
+# ============================================================
 
 def create_table():
     connection = connect_database()
@@ -36,14 +40,14 @@ def create_table():
     connection.close()
 
 
-# --------------------------------------------------
+# ============================================================
 # ADD TASK
-# --------------------------------------------------
+# ============================================================
 
 def add_task():
-    print("\n" + "-" * 50)
-    print("ADD NEW TASK")
-    print("-" * 50)
+    print("\n" + "-" * 60)
+    print("                    ADD NEW TASK")
+    print("-" * 60)
 
     title = input("Task title: ").strip()
 
@@ -53,12 +57,20 @@ def add_task():
 
     description = input("Description: ").strip()
 
-    priority = input(
-        "Priority (Low / Medium / High): "
-    ).strip().capitalize()
+    print("\nPriority Options:")
+    print("1. Low")
+    print("2. Medium")
+    print("3. High")
 
-    if priority not in ["Low", "Medium", "High"]:
-        priority = "Medium"
+    priority_choice = input("Choose priority: ").strip()
+
+    priority_map = {
+        "1": "Low",
+        "2": "Medium",
+        "3": "High"
+    }
+
+    priority = priority_map.get(priority_choice, "Medium")
 
     created_at = datetime.now().strftime(
         "%Y-%m-%d %H:%M:%S"
@@ -85,16 +97,22 @@ def add_task():
     print("\n✅ Task added successfully.")
 
 
-# --------------------------------------------------
-# VIEW TASKS
-# --------------------------------------------------
+# ============================================================
+# VIEW ALL TASKS
+# ============================================================
 
 def view_tasks():
     connection = connect_database()
     cursor = connection.cursor()
 
     cursor.execute("""
-        SELECT id, title, priority, status, created_at
+        SELECT
+            id,
+            title,
+            description,
+            priority,
+            status,
+            created_at
         FROM tasks
         ORDER BY id DESC
     """)
@@ -109,35 +127,43 @@ def view_tasks():
 
     if not tasks:
         print("📭 No tasks found.")
+        print("=" * 75)
         return
 
     for task in tasks:
-        task_id, title, priority, status, created_at = task
 
-        print(
-            f"\nID: {task_id}"
-            f"\nTask: {title}"
-            f"\nPriority: {priority}"
-            f"\nStatus: {status}"
-            f"\nCreated: {created_at}"
-        )
+        task_id = task[0]
+        title = task[1]
+        description = task[2]
+        priority = task[3]
+        status = task[4]
+        created_at = task[5]
 
-        print("-" * 50)
+        print(f"\n🆔 ID          : {task_id}")
+        print(f"📌 Title       : {title}")
+        print(f"📝 Description : {description or 'No description'}")
+        print(f"🔥 Priority    : {priority}")
+        print(f"📊 Status      : {status}")
+        print(f"🕒 Created     : {created_at}")
+
+        print("-" * 75)
 
 
-# --------------------------------------------------
-# UPDATE TASK STATUS
-# --------------------------------------------------
+# ============================================================
+# COMPLETE TASK
+# ============================================================
 
 def complete_task():
+
     view_tasks()
 
     try:
         task_id = int(
             input("\nEnter task ID to complete: ")
         )
+
     except ValueError:
-        print("❌ Please enter a valid ID.")
+        print("❌ Please enter a valid numeric ID.")
         return
 
     connection = connect_database()
@@ -147,10 +173,14 @@ def complete_task():
         UPDATE tasks
         SET status = ?
         WHERE id = ?
-    """, ("Completed", task_id))
+    """, (
+        "Completed",
+        task_id
+    ))
 
     if cursor.rowcount == 0:
         print("❌ Task not found.")
+
     else:
         print("✅ Task marked as completed.")
 
@@ -158,19 +188,21 @@ def complete_task():
     connection.close()
 
 
-# --------------------------------------------------
+# ============================================================
 # DELETE TASK
-# --------------------------------------------------
+# ============================================================
 
 def delete_task():
+
     view_tasks()
 
     try:
         task_id = int(
             input("\nEnter task ID to delete: ")
         )
+
     except ValueError:
-        print("❌ Please enter a valid ID.")
+        print("❌ Please enter a valid numeric ID.")
         return
 
     connection = connect_database()
@@ -183,6 +215,7 @@ def delete_task():
 
     if cursor.rowcount == 0:
         print("❌ Task not found.")
+
     else:
         print("🗑️ Task deleted successfully.")
 
@@ -190,20 +223,30 @@ def delete_task():
     connection.close()
 
 
-# --------------------------------------------------
+# ============================================================
 # SEARCH TASK
-# --------------------------------------------------
+# ============================================================
 
 def search_task():
+
     keyword = input(
         "\nEnter keyword to search: "
     ).strip()
+
+    if not keyword:
+        print("❌ Search keyword cannot be empty.")
+        return
 
     connection = connect_database()
     cursor = connection.cursor()
 
     cursor.execute("""
-        SELECT id, title, priority, status
+        SELECT
+            id,
+            title,
+            description,
+            priority,
+            status
         FROM tasks
         WHERE title LIKE ?
            OR description LIKE ?
@@ -217,84 +260,219 @@ def search_task():
 
     connection.close()
 
-    print("\n" + "=" * 60)
-    print("SEARCH RESULTS")
-    print("=" * 60)
+    print("\n" + "=" * 65)
+    print("                       SEARCH RESULTS")
+    print("=" * 65)
 
     if not results:
         print("🔍 No matching tasks found.")
+        print("=" * 65)
         return
 
     for task in results:
-        task_id, title, priority, status = task
+
+        task_id = task[0]
+        title = task[1]
+        description = task[2]
+        priority = task[3]
+        status = task[4]
+
+        print(f"\n🆔 ID          : {task_id}")
+        print(f"📌 Title       : {title}")
+        print(f"📝 Description : {description or 'No description'}")
+        print(f"🔥 Priority    : {priority}")
+        print(f"📊 Status      : {status}")
+
+        print("-" * 65)
+
+
+# ============================================================
+# TASK STATISTICS
+# ============================================================
+
+def show_statistics():
+
+    connection = connect_database()
+    cursor = connection.cursor()
+
+    # Total tasks
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM tasks
+    """)
+
+    total = cursor.fetchone()[0]
+
+    # Completed tasks
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM tasks
+        WHERE status = 'Completed'
+    """)
+
+    completed = cursor.fetchone()[0]
+
+    # Pending tasks
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM tasks
+        WHERE status = 'Pending'
+    """)
+
+    pending = cursor.fetchone()[0]
+
+    # High priority tasks
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM tasks
+        WHERE priority = 'High'
+    """)
+
+    high_priority = cursor.fetchone()[0]
+
+    # Medium priority tasks
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM tasks
+        WHERE priority = 'Medium'
+    """)
+
+    medium_priority = cursor.fetchone()[0]
+
+    # Low priority tasks
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM tasks
+        WHERE priority = 'Low'
+    """)
+
+    low_priority = cursor.fetchone()[0]
+
+    connection.close()
+
+    print("\n" + "=" * 65)
+    print("                     TASK STATISTICS")
+    print("=" * 65)
+
+    print(f"📋 Total Tasks       : {total}")
+    print(f"✅ Completed         : {completed}")
+    print(f"⏳ Pending           : {pending}")
+
+    print("\nPriority Breakdown")
+    print("-" * 40)
+
+    print(f"🔴 High Priority     : {high_priority}")
+    print(f"🟡 Medium Priority   : {medium_priority}")
+    print(f"🟢 Low Priority      : {low_priority}")
+
+    print("\nPerformance")
+    print("-" * 40)
+
+    if total > 0:
+
+        completion_rate = (
+            completed / total
+        ) * 100
 
         print(
-            f"\nID: {task_id}"
-            f"\nTask: {title}"
-            f"\nPriority: {priority}"
-            f"\nStatus: {status}"
+            f"📊 Completion Rate   : "
+            f"{completion_rate:.1f}%"
         )
 
-        print("-" * 40)
+    else:
+
+        print("📊 Completion Rate   : 0%")
+
+    print("=" * 65)
 
 
-# --------------------------------------------------
-# MAIN MENU
-# --------------------------------------------------
+# ============================================================
+# MENU
+# ============================================================
 
 def show_menu():
-    print("\n" + "=" * 60)
-    print("              🚀 SMART TASK MANAGER")
-    print("=" * 60)
 
-    print("1. Add Task")
-    print("2. View Tasks")
-    print("3. Complete Task")
-    print("4. Delete Task")
-    print("5. Search Task")
-    print("6. Exit")
+    print("\n")
+    print("=" * 65)
+    print("                  🚀 SMART TASK MANAGER")
+    print("=" * 65)
 
-    print("=" * 60)
+    print("1. ➕ Add Task")
+    print("2. 📋 View All Tasks")
+    print("3. ✅ Complete Task")
+    print("4. 🗑️ Delete Task")
+    print("5. 🔎 Search Task")
+    print("6. 📊 Task Statistics")
+    print("7. 🚪 Exit")
 
+    print("=" * 65)
+
+
+# ============================================================
+# MAIN APPLICATION
+# ============================================================
 
 def main():
 
+    # Create database/table automatically
     create_table()
+
+    print("\n" + "=" * 65)
+    print("             WELCOME TO SMART TASK MANAGER")
+    print("=" * 65)
 
     while True:
 
         show_menu()
 
         choice = input(
-            "\nChoose an option: "
+            "\nChoose an option (1-7): "
         ).strip()
 
         if choice == "1":
+
             add_task()
 
         elif choice == "2":
+
             view_tasks()
 
         elif choice == "3":
+
             complete_task()
 
         elif choice == "4":
+
             delete_task()
 
         elif choice == "5":
+
             search_task()
 
         elif choice == "6":
-            print("\n👋 Task Manager closed.")
+
+            show_statistics()
+
+        elif choice == "7":
+
+            print("\n" + "=" * 65)
+            print("👋 Thank you for using Smart Task Manager!")
+            print("🚀 Keep building. Keep learning.")
+            print("=" * 65)
+
             break
 
         else:
-            print("\n❌ Invalid choice. Try again.")
+
+            print(
+                "\n❌ Invalid choice."
+                "\nPlease select an option between 1 and 7."
+            )
 
 
-# --------------------------------------------------
-# PROGRAM START
-# --------------------------------------------------
+# ============================================================
+# PROGRAM ENTRY POINT
+# ============================================================
 
 if __name__ == "__main__":
     main()
