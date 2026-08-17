@@ -1,4 +1,5 @@
 import sqlite3
+import csv
 from datetime import datetime, date
 
 
@@ -531,6 +532,79 @@ def filter_tasks():
         tasks,
         heading
     )
+    
+# ============================================================
+# EXPORT TASKS TO CSV
+# ============================================================
+
+def export_tasks_csv():
+
+    connection = connect_database()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            title,
+            description,
+            priority,
+            status,
+            due_date,
+            created_at
+        FROM tasks
+        ORDER BY id DESC
+    """)
+
+    tasks = cursor.fetchall()
+
+    connection.close()
+
+    if not tasks:
+
+        print(
+            "\n📭 No tasks available to export."
+        )
+
+        return
+
+    filename = "task_report.csv"
+
+    try:
+
+        with open(
+            filename,
+            "w",
+            newline="",
+            encoding="utf-8"
+        ) as file:
+
+            writer = csv.writer(file)
+
+            writer.writerow([
+                "ID",
+                "Title",
+                "Description",
+                "Priority",
+                "Status",
+                "Due Date",
+                "Created At"
+            ])
+
+            writer.writerows(tasks)
+
+        print(
+            f"\n✅ Tasks exported successfully!"
+        )
+
+        print(
+            f"📁 File created: {filename}"
+        )
+
+    except OSError as error:
+
+        print(
+            f"\n❌ Export failed: {error}"
+        )
 
 
 # ============================================================
@@ -773,6 +847,10 @@ def main():
 
         elif choice == "11":
 
+            export_tasks_csv()
+
+        elif choice == "12":
+
             print("\n👋 Goodbye!")
             break
 
@@ -780,7 +858,7 @@ def main():
 
             print(
                 "\n❌ Invalid choice."
-                "\nChoose between 1 and 11."
+                "\nChoose between 1 and 12."
             )
 
 
