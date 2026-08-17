@@ -22,6 +22,7 @@ def connect_database():
 # ============================================================
 
 def create_table():
+
     connection = connect_database()
     cursor = connection.cursor()
 
@@ -45,6 +46,7 @@ def create_table():
 # ============================================================
 
 def add_task():
+
     print("\n" + "-" * 60)
     print("                    ADD NEW TASK")
     print("-" * 60)
@@ -102,6 +104,7 @@ def add_task():
 # ============================================================
 
 def view_tasks():
+
     connection = connect_database()
     cursor = connection.cursor()
 
@@ -147,6 +150,86 @@ def view_tasks():
         print(f"🕒 Created     : {created_at}")
 
         print("-" * 75)
+
+
+# ============================================================
+# UPDATE TASK
+# ============================================================
+
+def update_task():
+
+    view_tasks()
+
+    try:
+        task_id = int(
+            input("\nEnter task ID to update: ")
+        )
+
+    except ValueError:
+        print("❌ Please enter a valid numeric ID.")
+        return
+
+    connection = connect_database()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT title, description, priority
+        FROM tasks
+        WHERE id = ?
+    """, (task_id,))
+
+    task = cursor.fetchone()
+
+    if not task:
+
+        print("❌ Task not found.")
+        connection.close()
+        return
+
+    old_title = task[0]
+    old_description = task[1]
+    old_priority = task[2]
+
+    print("\nPress Enter to keep the existing value.")
+
+    new_title = input(
+        f"Title [{old_title}]: "
+    ).strip()
+
+    new_description = input(
+        f"Description [{old_description or 'None'}]: "
+    ).strip()
+
+    new_priority = input(
+        f"Priority [{old_priority}] (Low/Medium/High): "
+    ).strip().capitalize()
+
+    if not new_title:
+        new_title = old_title
+
+    if not new_description:
+        new_description = old_description
+
+    if new_priority not in ["Low", "Medium", "High"]:
+        new_priority = old_priority
+
+    cursor.execute("""
+        UPDATE tasks
+        SET title = ?,
+            description = ?,
+            priority = ?
+        WHERE id = ?
+    """, (
+        new_title,
+        new_description,
+        new_priority,
+        task_id
+    ))
+
+    connection.commit()
+    connection.close()
+
+    print("\n✅ Task updated successfully.")
 
 
 # ============================================================
@@ -295,7 +378,6 @@ def show_statistics():
     connection = connect_database()
     cursor = connection.cursor()
 
-    # Total tasks
     cursor.execute("""
         SELECT COUNT(*)
         FROM tasks
@@ -303,7 +385,6 @@ def show_statistics():
 
     total = cursor.fetchone()[0]
 
-    # Completed tasks
     cursor.execute("""
         SELECT COUNT(*)
         FROM tasks
@@ -312,7 +393,6 @@ def show_statistics():
 
     completed = cursor.fetchone()[0]
 
-    # Pending tasks
     cursor.execute("""
         SELECT COUNT(*)
         FROM tasks
@@ -321,7 +401,6 @@ def show_statistics():
 
     pending = cursor.fetchone()[0]
 
-    # High priority tasks
     cursor.execute("""
         SELECT COUNT(*)
         FROM tasks
@@ -330,7 +409,6 @@ def show_statistics():
 
     high_priority = cursor.fetchone()[0]
 
-    # Medium priority tasks
     cursor.execute("""
         SELECT COUNT(*)
         FROM tasks
@@ -339,7 +417,6 @@ def show_statistics():
 
     medium_priority = cursor.fetchone()[0]
 
-    # Low priority tasks
     cursor.execute("""
         SELECT COUNT(*)
         FROM tasks
@@ -392,8 +469,7 @@ def show_statistics():
 
 def show_menu():
 
-    print("\n")
-    print("=" * 65)
+    print("\n" + "=" * 65)
     print("                  🚀 SMART TASK MANAGER")
     print("=" * 65)
 
@@ -401,9 +477,10 @@ def show_menu():
     print("2. 📋 View All Tasks")
     print("3. ✅ Complete Task")
     print("4. 🗑️ Delete Task")
-    print("5. 🔎 Search Task")
-    print("6. 📊 Task Statistics")
-    print("7. 🚪 Exit")
+    print("5. ✏️ Update Task")
+    print("6. 🔎 Search Task")
+    print("7. 📊 Task Statistics")
+    print("8. 🚪 Exit")
 
     print("=" * 65)
 
@@ -414,7 +491,6 @@ def show_menu():
 
 def main():
 
-    # Create database/table automatically
     create_table()
 
     print("\n" + "=" * 65)
@@ -426,7 +502,7 @@ def main():
         show_menu()
 
         choice = input(
-            "\nChoose an option (1-7): "
+            "\nChoose an option (1-8): "
         ).strip()
 
         if choice == "1":
@@ -447,13 +523,17 @@ def main():
 
         elif choice == "5":
 
-            search_task()
+            update_task()
 
         elif choice == "6":
 
-            show_statistics()
+            search_task()
 
         elif choice == "7":
+
+            show_statistics()
+
+        elif choice == "8":
 
             print("\n" + "=" * 65)
             print("👋 Thank you for using Smart Task Manager!")
@@ -466,7 +546,7 @@ def main():
 
             print(
                 "\n❌ Invalid choice."
-                "\nPlease select an option between 1 and 7."
+                "\nPlease select an option between 1 and 8."
             )
 
 
