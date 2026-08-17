@@ -2,24 +2,16 @@ import sqlite3
 from datetime import datetime, date
 
 
-# ============================================================
-# CONFIGURATION
-# ============================================================
-
 DATABASE_NAME = "tasks.db"
 
 
 # ============================================================
-# DATABASE CONNECTION
+# DATABASE
 # ============================================================
 
 def connect_database():
     return sqlite3.connect(DATABASE_NAME)
 
-
-# ============================================================
-# CREATE DATABASE TABLE
-# ============================================================
 
 def create_table():
 
@@ -48,9 +40,9 @@ def create_table():
 
 def add_task():
 
-    print("\n" + "-" * 60)
+    print("\n" + "=" * 60)
     print("                    ADD NEW TASK")
-    print("-" * 60)
+    print("=" * 60)
 
     title = input("Task title: ").strip()
 
@@ -60,26 +52,22 @@ def add_task():
 
     description = input("Description: ").strip()
 
-    print("\nPriority Options:")
-    print("1. Low")
+    print("\n1. Low")
     print("2. Medium")
     print("3. High")
 
-    priority_choice = input("Choose priority: ").strip()
+    priority_choice = input(
+        "Choose priority: "
+    ).strip()
 
-    priority_map = {
+    priority = {
         "1": "Low",
         "2": "Medium",
         "3": "High"
-    }
-
-    priority = priority_map.get(
-        priority_choice,
-        "Medium"
-    )
+    }.get(priority_choice, "Medium")
 
     due_date = input(
-        "\nDue date (YYYY-MM-DD): "
+        "Due date (YYYY-MM-DD): "
     ).strip()
 
     if due_date:
@@ -94,7 +82,6 @@ def add_task():
 
             print(
                 "❌ Invalid date format."
-                "\nUse YYYY-MM-DD."
             )
 
             return
@@ -137,7 +124,7 @@ def add_task():
 
 
 # ============================================================
-# VIEW ALL TASKS
+# VIEW TASKS
 # ============================================================
 
 def view_tasks():
@@ -162,8 +149,20 @@ def view_tasks():
 
     connection.close()
 
+    display_tasks(
+        tasks,
+        "ALL TASKS"
+    )
+
+
+# ============================================================
+# DISPLAY TASKS
+# ============================================================
+
+def display_tasks(tasks, heading):
+
     print("\n" + "=" * 80)
-    print("                         ALL TASKS")
+    print(f"                    {heading}")
     print("=" * 80)
 
     if not tasks:
@@ -201,14 +200,13 @@ def update_task():
     view_tasks()
 
     try:
-
         task_id = int(
-            input("\nEnter task ID to update: ")
+            input("\nEnter task ID: ")
         )
 
     except ValueError:
 
-        print("❌ Invalid task ID.")
+        print("❌ Invalid ID.")
         return
 
     connection = connect_database()
@@ -232,56 +230,42 @@ def update_task():
         connection.close()
         return
 
-    old_title = task[0]
-    old_description = task[1]
-    old_priority = task[2]
-    old_due_date = task[3]
-
-    print(
-        "\nPress Enter to keep existing value."
-    )
-
     new_title = input(
-        f"Title [{old_title}]: "
+        f"Title [{task[0]}]: "
     ).strip()
 
     new_description = input(
-        f"Description "
-        f"[{old_description or 'None'}]: "
+        f"Description [{task[1] or 'None'}]: "
     ).strip()
 
     new_priority = input(
-        f"Priority [{old_priority}] "
-        f"(Low/Medium/High): "
+        f"Priority [{task[2]}]: "
     ).strip().capitalize()
 
     new_due_date = input(
-        f"Due Date "
-        f"[{old_due_date or 'None'}] "
-        f"(YYYY-MM-DD): "
+        f"Due Date [{task[3] or 'None'}]: "
     ).strip()
 
     if not new_title:
-        new_title = old_title
+        new_title = task[0]
 
     if not new_description:
-        new_description = old_description
+        new_description = task[1]
 
     if new_priority not in [
         "Low",
         "Medium",
         "High"
     ]:
-        new_priority = old_priority
+        new_priority = task[2]
 
     if not new_due_date:
 
-        new_due_date = old_due_date
+        new_due_date = task[3]
 
     else:
 
         try:
-
             datetime.strptime(
                 new_due_date,
                 "%Y-%m-%d"
@@ -289,7 +273,7 @@ def update_task():
 
         except ValueError:
 
-            print("❌ Invalid date format.")
+            print("❌ Invalid date.")
             connection.close()
             return
 
@@ -312,7 +296,7 @@ def update_task():
     connection.commit()
     connection.close()
 
-    print("\n✅ Task updated successfully.")
+    print("\n✅ Task updated.")
 
 
 # ============================================================
@@ -324,14 +308,13 @@ def complete_task():
     view_tasks()
 
     try:
-
         task_id = int(
-            input("\nEnter task ID to complete: ")
+            input("\nEnter task ID: ")
         )
 
     except ValueError:
 
-        print("❌ Invalid task ID.")
+        print("❌ Invalid ID.")
         return
 
     connection = connect_database()
@@ -339,20 +322,17 @@ def complete_task():
 
     cursor.execute("""
         UPDATE tasks
-        SET status = ?
+        SET status = 'Completed'
         WHERE id = ?
-    """, (
-        "Completed",
-        task_id
-    ))
+    """, (task_id,))
 
-    if cursor.rowcount == 0:
+    if cursor.rowcount:
 
-        print("❌ Task not found.")
+        print("✅ Task completed.")
 
     else:
 
-        print("✅ Task marked as completed.")
+        print("❌ Task not found.")
 
     connection.commit()
     connection.close()
@@ -367,14 +347,13 @@ def delete_task():
     view_tasks()
 
     try:
-
         task_id = int(
-            input("\nEnter task ID to delete: ")
+            input("\nEnter task ID: ")
         )
 
     except ValueError:
 
-        print("❌ Invalid task ID.")
+        print("❌ Invalid ID.")
         return
 
     connection = connect_database()
@@ -385,31 +364,31 @@ def delete_task():
         WHERE id = ?
     """, (task_id,))
 
-    if cursor.rowcount == 0:
+    if cursor.rowcount:
 
-        print("❌ Task not found.")
+        print("🗑️ Task deleted.")
 
     else:
 
-        print("🗑️ Task deleted successfully.")
+        print("❌ Task not found.")
 
     connection.commit()
     connection.close()
 
 
 # ============================================================
-# SEARCH TASK
+# SEARCH
 # ============================================================
 
 def search_task():
 
     keyword = input(
-        "\nEnter keyword to search: "
+        "\nSearch keyword: "
     ).strip()
 
     if not keyword:
 
-        print("❌ Keyword cannot be empty.")
+        print("❌ Keyword required.")
         return
 
     connection = connect_database()
@@ -422,7 +401,8 @@ def search_task():
             description,
             priority,
             status,
-            due_date
+            due_date,
+            created_at
         FROM tasks
         WHERE title LIKE ?
            OR description LIKE ?
@@ -436,35 +416,125 @@ def search_task():
 
     connection.close()
 
-    print("\n" + "=" * 70)
-    print("                       SEARCH RESULTS")
-    print("=" * 70)
-
-    if not results:
-
-        print("🔍 No matching tasks found.")
-        return
-
-    for task in results:
-
-        print(f"\n🆔 ID          : {task[0]}")
-        print(f"📌 Title       : {task[1]}")
-        print(
-            f"📝 Description : "
-            f"{task[2] or 'No description'}"
-        )
-        print(f"🔥 Priority    : {task[3]}")
-        print(f"📊 Status      : {task[4]}")
-        print(
-            f"📅 Due Date    : "
-            f"{task[5] or 'No deadline'}"
-        )
-
-        print("-" * 70)
+    display_tasks(
+        results,
+        "SEARCH RESULTS"
+    )
 
 
 # ============================================================
-# TASK STATISTICS
+# FILTER TASKS
+# ============================================================
+
+def filter_tasks():
+
+    print("\n" + "=" * 60)
+    print("                    FILTER TASKS")
+    print("=" * 60)
+
+    print("1. Pending Tasks")
+    print("2. Completed Tasks")
+    print("3. High Priority")
+    print("4. Medium Priority")
+    print("5. Low Priority")
+    print("6. Due Today")
+
+    choice = input(
+        "\nChoose filter: "
+    ).strip()
+
+    connection = connect_database()
+    cursor = connection.cursor()
+
+    if choice == "1":
+
+        cursor.execute("""
+            SELECT *
+            FROM tasks
+            WHERE status = 'Pending'
+            ORDER BY id DESC
+        """)
+
+        heading = "PENDING TASKS"
+
+    elif choice == "2":
+
+        cursor.execute("""
+            SELECT *
+            FROM tasks
+            WHERE status = 'Completed'
+            ORDER BY id DESC
+        """)
+
+        heading = "COMPLETED TASKS"
+
+    elif choice == "3":
+
+        cursor.execute("""
+            SELECT *
+            FROM tasks
+            WHERE priority = 'High'
+            ORDER BY id DESC
+        """)
+
+        heading = "HIGH PRIORITY TASKS"
+
+    elif choice == "4":
+
+        cursor.execute("""
+            SELECT *
+            FROM tasks
+            WHERE priority = 'Medium'
+            ORDER BY id DESC
+        """)
+
+        heading = "MEDIUM PRIORITY TASKS"
+
+    elif choice == "5":
+
+        cursor.execute("""
+            SELECT *
+            FROM tasks
+            WHERE priority = 'Low'
+            ORDER BY id DESC
+        """)
+
+        heading = "LOW PRIORITY TASKS"
+
+    elif choice == "6":
+
+        cursor.execute("""
+            SELECT *
+            FROM tasks
+            WHERE due_date = ?
+            AND status != 'Completed'
+            ORDER BY id DESC
+        """, (
+            date.today().isoformat(),
+        ))
+
+        heading = "TASKS DUE TODAY"
+
+    else:
+
+        print("❌ Invalid filter.")
+
+        connection.close()
+
+        return
+
+    tasks = cursor.fetchall()
+
+    connection.close()
+
+    display_tasks(
+        tasks,
+        heading
+    )
+
+
+# ============================================================
+# STATISTICS
 # ============================================================
 
 def show_statistics():
@@ -502,102 +572,55 @@ def show_statistics():
 
     high = cursor.fetchone()[0]
 
-    cursor.execute("""
-        SELECT COUNT(*)
-        FROM tasks
-        WHERE priority = 'Medium'
-    """)
-
-    medium = cursor.fetchone()[0]
-
-    cursor.execute("""
-        SELECT COUNT(*)
-        FROM tasks
-        WHERE priority = 'Low'
-    """)
-
-    low = cursor.fetchone()[0]
-
     connection.close()
 
-    completion_rate = (
-        (completed / total) * 100
-        if total > 0
+    rate = (
+        completed / total * 100
+        if total
         else 0
     )
 
-    print("\n" + "=" * 70)
+    print("\n" + "=" * 65)
     print("                     TASK STATISTICS")
-    print("=" * 70)
+    print("=" * 65)
 
-    print(f"📋 Total Tasks       : {total}")
-    print(f"✅ Completed         : {completed}")
-    print(f"⏳ Pending           : {pending}")
+    print(f"📋 Total Tasks     : {total}")
+    print(f"✅ Completed       : {completed}")
+    print(f"⏳ Pending         : {pending}")
+    print(f"🔴 High Priority   : {high}")
+    print(f"📈 Completion Rate : {rate:.1f}%")
 
-    print("\nPriority Breakdown")
-    print("-" * 40)
-
-    print(f"🔴 High              : {high}")
-    print(f"🟡 Medium            : {medium}")
-    print(f"🟢 Low               : {low}")
-
-    print("\n📈 Completion Rate   : "
-          f"{completion_rate:.1f}%")
-
-    print("=" * 70)
+    print("=" * 65)
 
 
 # ============================================================
-# OVERDUE TASKS
+# OVERDUE
 # ============================================================
 
 def show_overdue_tasks():
-
-    today = date.today().isoformat()
 
     connection = connect_database()
     cursor = connection.cursor()
 
     cursor.execute("""
-        SELECT
-            id,
-            title,
-            description,
-            priority,
-            due_date
+        SELECT *
         FROM tasks
         WHERE due_date IS NOT NULL
           AND due_date < ?
           AND status != 'Completed'
         ORDER BY due_date ASC
-    """, (today,))
+    """, (
+        date.today().isoformat(),
+    ))
 
     tasks = cursor.fetchall()
 
     connection.close()
 
-    print("\n" + "=" * 75)
-    print("                    ⚠️ OVERDUE TASKS")
-    print("=" * 75)
-
-    if not tasks:
-
-        print("🎉 No overdue tasks!")
-        return
-
-    for task in tasks:
-
-        print(f"\n🆔 ID          : {task[0]}")
-        print(f"📌 Title       : {task[1]}")
-        print(
-            f"📝 Description : "
-            f"{task[2] or 'No description'}"
-        )
-        print(f"🔥 Priority    : {task[3]}")
-        print(f"📅 Due Date    : {task[4]}")
-        print("⚠️ Status      : OVERDUE")
-
-        print("-" * 75)
+    display_tasks(
+        tasks,
+        "⚠️ OVERDUE TASKS"
+    )
 
 
 # ============================================================
@@ -631,88 +654,46 @@ def productivity_dashboard():
     cursor.execute("""
         SELECT COUNT(*)
         FROM tasks
-        WHERE priority = 'High'
-    """)
-    high = cursor.fetchone()[0]
-
-    cursor.execute("""
-        SELECT COUNT(*)
-        FROM tasks
-        WHERE due_date IS NOT NULL
-          AND due_date < ?
+        WHERE due_date < ?
           AND status != 'Completed'
-    """, (date.today().isoformat(),))
+          AND due_date IS NOT NULL
+    """, (
+        date.today().isoformat(),
+    ))
 
     overdue = cursor.fetchone()[0]
 
-    cursor.execute("""
-        SELECT COUNT(*)
-        FROM tasks
-        WHERE due_date = ?
-          AND status != 'Completed'
-    """, (date.today().isoformat(),))
-
-    today_tasks = cursor.fetchone()[0]
-
     connection.close()
 
-    completion_rate = (
-        (completed / total) * 100
-        if total > 0
+    rate = (
+        completed / total * 100
+        if total
         else 0
     )
 
-    print("\n" + "=" * 75)
+    print("\n" + "=" * 70)
     print("                 🚀 PRODUCTIVITY DASHBOARD")
-    print("=" * 75)
+    print("=" * 70)
 
-    print("\nTASK OVERVIEW")
-    print("-" * 45)
-
-    print(f"📋 Total Tasks       : {total}")
+    print(f"\n📋 Total Tasks       : {total}")
     print(f"⏳ Pending           : {pending}")
     print(f"✅ Completed         : {completed}")
     print(f"⚠️ Overdue           : {overdue}")
-    print(f"📅 Due Today         : {today_tasks}")
+    print(f"📈 Completion Rate   : {rate:.1f}%")
 
-    print("\nPRIORITY")
-    print("-" * 45)
+    if rate >= 80:
+        print("\n🔥 Excellent productivity!")
 
-    print(f"🔴 High Priority     : {high}")
+    elif rate >= 50:
+        print("\n🚀 Good progress!")
 
-    print("\nPRODUCTIVITY")
-    print("-" * 45)
-
-    print(
-        f"📈 Completion Rate   : "
-        f"{completion_rate:.1f}%"
-    )
-
-    if completion_rate >= 80:
-
-        print(
-            "🔥 Excellent productivity!"
-        )
-
-    elif completion_rate >= 50:
-
-        print(
-            "🚀 Good progress. Keep going!"
-        )
-
-    elif completion_rate > 0:
-
-        print(
-            "💪 Keep pushing. You are improving!"
-        )
+    elif rate > 0:
+        print("\n💪 Keep going!")
 
     else:
+        print("\n🌱 Start completing tasks!")
 
-        print(
-            "🌱 Start completing your tasks!"
-        )
-
-    print("=" * 75)
+    print("=" * 70)
 
 
 # ============================================================
@@ -725,22 +706,23 @@ def show_menu():
     print("                  🚀 SMART TASK MANAGER")
     print("=" * 75)
 
-    print("1. ➕ Add Task")
-    print("2. 📋 View All Tasks")
-    print("3. ✅ Complete Task")
-    print("4. 🗑️ Delete Task")
-    print("5. ✏️ Update Task")
-    print("6. 🔎 Search Task")
-    print("7. 📊 Task Statistics")
-    print("8. ⚠️ Overdue Tasks")
-    print("9. 🚀 Productivity Dashboard")
-    print("10. 🚪 Exit")
+    print("1.  ➕ Add Task")
+    print("2.  📋 View All Tasks")
+    print("3.  ✅ Complete Task")
+    print("4.  🗑️ Delete Task")
+    print("5.  ✏️ Update Task")
+    print("6.  🔎 Search Task")
+    print("7.  📊 Task Statistics")
+    print("8.  ⚠️ Overdue Tasks")
+    print("9.  🚀 Productivity Dashboard")
+    print("10. 🔍 Filter Tasks")
+    print("11. 🚪 Exit")
 
     print("=" * 75)
 
 
 # ============================================================
-# MAIN APPLICATION
+# MAIN
 # ============================================================
 
 def main():
@@ -756,7 +738,7 @@ def main():
         show_menu()
 
         choice = input(
-            "\nChoose an option (1-10): "
+            "\nChoose an option (1-11): "
         ).strip()
 
         if choice == "1":
@@ -787,29 +769,23 @@ def main():
             productivity_dashboard()
 
         elif choice == "10":
+            filter_tasks()
 
-            print("\n" + "=" * 75)
-            print(
-                "👋 Thank you for using "
-                "Smart Task Manager!"
-            )
-            print(
-                "🚀 Keep building. Keep learning."
-            )
-            print("=" * 75)
+        elif choice == "11":
 
+            print("\n👋 Goodbye!")
             break
 
         else:
 
             print(
                 "\n❌ Invalid choice."
-                "\nPlease select an option between 1 and 10."
+                "\nChoose between 1 and 11."
             )
 
 
 # ============================================================
-# PROGRAM ENTRY POINT
+# ENTRY POINT
 # ============================================================
 
 if __name__ == "__main__":
