@@ -33,6 +33,7 @@ def create_table():
             description TEXT,
             priority TEXT DEFAULT 'Medium',
             status TEXT DEFAULT 'Pending',
+            due_date TEXT,
             created_at TEXT NOT NULL
         )
     """)
@@ -72,7 +73,36 @@ def add_task():
         "3": "High"
     }
 
-    priority = priority_map.get(priority_choice, "Medium")
+    priority = priority_map.get(
+        priority_choice,
+        "Medium"
+    )
+
+    due_date = input(
+        "\nDue date (YYYY-MM-DD): "
+    ).strip()
+
+    if due_date:
+
+        try:
+
+            datetime.strptime(
+                due_date,
+                "%Y-%m-%d"
+            )
+
+        except ValueError:
+
+            print(
+                "❌ Invalid date format."
+                "\nUse YYYY-MM-DD."
+            )
+
+            return
+
+    else:
+
+        due_date = None
 
     created_at = datetime.now().strftime(
         "%Y-%m-%d %H:%M:%S"
@@ -83,13 +113,21 @@ def add_task():
 
     cursor.execute("""
         INSERT INTO tasks
-        (title, description, priority, status, created_at)
-        VALUES (?, ?, ?, ?, ?)
+        (
+            title,
+            description,
+            priority,
+            status,
+            due_date,
+            created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
     """, (
         title,
         description,
         priority,
         "Pending",
+        due_date,
         created_at
     ))
 
@@ -115,6 +153,7 @@ def view_tasks():
             description,
             priority,
             status,
+            due_date,
             created_at
         FROM tasks
         ORDER BY id DESC
@@ -124,13 +163,15 @@ def view_tasks():
 
     connection.close()
 
-    print("\n" + "=" * 75)
+    print("\n" + "=" * 80)
     print("                         ALL TASKS")
-    print("=" * 75)
+    print("=" * 80)
 
     if not tasks:
+
         print("📭 No tasks found.")
-        print("=" * 75)
+        print("=" * 80)
+
         return
 
     for task in tasks:
@@ -140,16 +181,24 @@ def view_tasks():
         description = task[2]
         priority = task[3]
         status = task[4]
-        created_at = task[5]
+        due_date = task[5]
+        created_at = task[6]
 
         print(f"\n🆔 ID          : {task_id}")
         print(f"📌 Title       : {title}")
-        print(f"📝 Description : {description or 'No description'}")
+        print(
+            f"📝 Description : "
+            f"{description or 'No description'}"
+        )
         print(f"🔥 Priority    : {priority}")
         print(f"📊 Status      : {status}")
+        print(
+            f"📅 Due Date    : "
+            f"{due_date or 'No deadline'}"
+        )
         print(f"🕒 Created     : {created_at}")
 
-        print("-" * 75)
+        print("-" * 80)
 
 
 # ============================================================
@@ -161,19 +210,28 @@ def update_task():
     view_tasks()
 
     try:
+
         task_id = int(
             input("\nEnter task ID to update: ")
         )
 
     except ValueError:
-        print("❌ Please enter a valid numeric ID.")
+
+        print(
+            "❌ Please enter a valid numeric ID."
+        )
+
         return
 
     connection = connect_database()
     cursor = connection.cursor()
 
     cursor.execute("""
-        SELECT title, description, priority
+        SELECT
+            title,
+            description,
+            priority,
+            due_date
         FROM tasks
         WHERE id = ?
     """, (task_id,))
@@ -183,46 +241,93 @@ def update_task():
     if not task:
 
         print("❌ Task not found.")
+
         connection.close()
+
         return
 
     old_title = task[0]
     old_description = task[1]
     old_priority = task[2]
+    old_due_date = task[3]
 
-    print("\nPress Enter to keep the existing value.")
+    print(
+        "\nPress Enter to keep the existing value."
+    )
 
     new_title = input(
         f"Title [{old_title}]: "
     ).strip()
 
     new_description = input(
-        f"Description [{old_description or 'None'}]: "
+        f"Description "
+        f"[{old_description or 'None'}]: "
     ).strip()
 
     new_priority = input(
-        f"Priority [{old_priority}] (Low/Medium/High): "
+        f"Priority [{old_priority}] "
+        f"(Low/Medium/High): "
     ).strip().capitalize()
 
+    new_due_date = input(
+        f"Due Date "
+        f"[{old_due_date or 'None'}] "
+        f"(YYYY-MM-DD): "
+    ).strip()
+
     if not new_title:
+
         new_title = old_title
 
     if not new_description:
+
         new_description = old_description
 
-    if new_priority not in ["Low", "Medium", "High"]:
+    if new_priority not in [
+        "Low",
+        "Medium",
+        "High"
+    ]:
+
         new_priority = old_priority
+
+    if not new_due_date:
+
+        new_due_date = old_due_date
+
+    else:
+
+        try:
+
+            datetime.strptime(
+                new_due_date,
+                "%Y-%m-%d"
+            )
+
+        except ValueError:
+
+            print(
+                "❌ Invalid date format."
+                "\nUse YYYY-MM-DD."
+            )
+
+            connection.close()
+
+            return
 
     cursor.execute("""
         UPDATE tasks
-        SET title = ?,
+        SET
+            title = ?,
             description = ?,
-            priority = ?
+            priority = ?,
+            due_date = ?
         WHERE id = ?
     """, (
         new_title,
         new_description,
         new_priority,
+        new_due_date,
         task_id
     ))
 
@@ -241,12 +346,17 @@ def complete_task():
     view_tasks()
 
     try:
+
         task_id = int(
             input("\nEnter task ID to complete: ")
         )
 
     except ValueError:
-        print("❌ Please enter a valid numeric ID.")
+
+        print(
+            "❌ Please enter a valid numeric ID."
+        )
+
         return
 
     connection = connect_database()
@@ -262,10 +372,14 @@ def complete_task():
     ))
 
     if cursor.rowcount == 0:
+
         print("❌ Task not found.")
 
     else:
-        print("✅ Task marked as completed.")
+
+        print(
+            "✅ Task marked as completed."
+        )
 
     connection.commit()
     connection.close()
@@ -280,12 +394,17 @@ def delete_task():
     view_tasks()
 
     try:
+
         task_id = int(
             input("\nEnter task ID to delete: ")
         )
 
     except ValueError:
-        print("❌ Please enter a valid numeric ID.")
+
+        print(
+            "❌ Please enter a valid numeric ID."
+        )
+
         return
 
     connection = connect_database()
@@ -297,10 +416,14 @@ def delete_task():
     """, (task_id,))
 
     if cursor.rowcount == 0:
+
         print("❌ Task not found.")
 
     else:
-        print("🗑️ Task deleted successfully.")
+
+        print(
+            "🗑️ Task deleted successfully."
+        )
 
     connection.commit()
     connection.close()
@@ -317,7 +440,11 @@ def search_task():
     ).strip()
 
     if not keyword:
-        print("❌ Search keyword cannot be empty.")
+
+        print(
+            "❌ Search keyword cannot be empty."
+        )
+
         return
 
     connection = connect_database()
@@ -329,7 +456,8 @@ def search_task():
             title,
             description,
             priority,
-            status
+            status,
+            due_date
         FROM tasks
         WHERE title LIKE ?
            OR description LIKE ?
@@ -343,13 +471,18 @@ def search_task():
 
     connection.close()
 
-    print("\n" + "=" * 65)
+    print("\n" + "=" * 70)
     print("                       SEARCH RESULTS")
-    print("=" * 65)
+    print("=" * 70)
 
     if not results:
-        print("🔍 No matching tasks found.")
-        print("=" * 65)
+
+        print(
+            "🔍 No matching tasks found."
+        )
+
+        print("=" * 70)
+
         return
 
     for task in results:
@@ -359,14 +492,22 @@ def search_task():
         description = task[2]
         priority = task[3]
         status = task[4]
+        due_date = task[5]
 
         print(f"\n🆔 ID          : {task_id}")
         print(f"📌 Title       : {title}")
-        print(f"📝 Description : {description or 'No description'}")
+        print(
+            f"📝 Description : "
+            f"{description or 'No description'}"
+        )
         print(f"🔥 Priority    : {priority}")
         print(f"📊 Status      : {status}")
+        print(
+            f"📅 Due Date    : "
+            f"{due_date or 'No deadline'}"
+        )
 
-        print("-" * 65)
+        print("-" * 70)
 
 
 # ============================================================
@@ -438,9 +579,20 @@ def show_statistics():
     print("\nPriority Breakdown")
     print("-" * 40)
 
-    print(f"🔴 High Priority     : {high_priority}")
-    print(f"🟡 Medium Priority   : {medium_priority}")
-    print(f"🟢 Low Priority      : {low_priority}")
+    print(
+        f"🔴 High Priority     : "
+        f"{high_priority}"
+    )
+
+    print(
+        f"🟡 Medium Priority   : "
+        f"{medium_priority}"
+    )
+
+    print(
+        f"🟢 Low Priority      : "
+        f"{low_priority}"
+    )
 
     print("\nPerformance")
     print("-" * 40)
@@ -458,7 +610,9 @@ def show_statistics():
 
     else:
 
-        print("📊 Completion Rate   : 0%")
+        print(
+            "📊 Completion Rate   : 0%"
+        )
 
     print("=" * 65)
 
@@ -469,9 +623,9 @@ def show_statistics():
 
 def show_menu():
 
-    print("\n" + "=" * 65)
+    print("\n" + "=" * 70)
     print("                  🚀 SMART TASK MANAGER")
-    print("=" * 65)
+    print("=" * 70)
 
     print("1. ➕ Add Task")
     print("2. 📋 View All Tasks")
@@ -482,7 +636,7 @@ def show_menu():
     print("7. 📊 Task Statistics")
     print("8. 🚪 Exit")
 
-    print("=" * 65)
+    print("=" * 70)
 
 
 # ============================================================
@@ -493,9 +647,9 @@ def main():
 
     create_table()
 
-    print("\n" + "=" * 65)
+    print("\n" + "=" * 70)
     print("             WELCOME TO SMART TASK MANAGER")
-    print("=" * 65)
+    print("=" * 70)
 
     while True:
 
@@ -535,10 +689,15 @@ def main():
 
         elif choice == "8":
 
-            print("\n" + "=" * 65)
-            print("👋 Thank you for using Smart Task Manager!")
-            print("🚀 Keep building. Keep learning.")
-            print("=" * 65)
+            print("\n" + "=" * 70)
+            print(
+                "👋 Thank you for using "
+                "Smart Task Manager!"
+            )
+            print(
+                "🚀 Keep building. Keep learning."
+            )
+            print("=" * 70)
 
             break
 
