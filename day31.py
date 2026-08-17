@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import datetime
+from datetime import datetime, date
 
 
 # ============================================================
@@ -618,14 +618,78 @@ def show_statistics():
 
 
 # ============================================================
+# OVERDUE TASK DETECTION
+# ============================================================
+
+def show_overdue_tasks():
+
+    today = date.today().isoformat()
+
+    connection = connect_database()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            title,
+            description,
+            priority,
+            due_date
+        FROM tasks
+        WHERE due_date IS NOT NULL
+          AND due_date < ?
+          AND status != 'Completed'
+        ORDER BY due_date ASC
+    """, (today,))
+
+    overdue_tasks = cursor.fetchall()
+
+    connection.close()
+
+    print("\n" + "=" * 75)
+    print("                    ⚠️ OVERDUE TASKS")
+    print("=" * 75)
+
+    if not overdue_tasks:
+
+        print(
+            "🎉 No overdue tasks!"
+        )
+
+        print("=" * 75)
+
+        return
+
+    for task in overdue_tasks:
+
+        task_id = task[0]
+        title = task[1]
+        description = task[2]
+        priority = task[3]
+        due_date = task[4]
+
+        print(f"\n🆔 ID          : {task_id}")
+        print(f"📌 Title       : {title}")
+        print(
+            f"📝 Description : "
+            f"{description or 'No description'}"
+        )
+        print(f"🔥 Priority    : {priority}")
+        print(f"📅 Due Date    : {due_date}")
+        print("⚠️ Status      : OVERDUE")
+
+        print("-" * 75)
+
+
+# ============================================================
 # MENU
 # ============================================================
 
 def show_menu():
 
-    print("\n" + "=" * 70)
+    print("\n" + "=" * 75)
     print("                  🚀 SMART TASK MANAGER")
-    print("=" * 70)
+    print("=" * 75)
 
     print("1. ➕ Add Task")
     print("2. 📋 View All Tasks")
@@ -634,9 +698,10 @@ def show_menu():
     print("5. ✏️ Update Task")
     print("6. 🔎 Search Task")
     print("7. 📊 Task Statistics")
-    print("8. 🚪 Exit")
+    print("8. ⚠️ Overdue Tasks")
+    print("9. 🚪 Exit")
 
-    print("=" * 70)
+    print("=" * 75)
 
 
 # ============================================================
@@ -647,16 +712,16 @@ def main():
 
     create_table()
 
-    print("\n" + "=" * 70)
+    print("\n" + "=" * 75)
     print("             WELCOME TO SMART TASK MANAGER")
-    print("=" * 70)
+    print("=" * 75)
 
     while True:
 
         show_menu()
 
         choice = input(
-            "\nChoose an option (1-8): "
+            "\nChoose an option (1-9): "
         ).strip()
 
         if choice == "1":
@@ -689,7 +754,11 @@ def main():
 
         elif choice == "8":
 
-            print("\n" + "=" * 70)
+            show_overdue_tasks()
+
+        elif choice == "9":
+
+            print("\n" + "=" * 75)
             print(
                 "👋 Thank you for using "
                 "Smart Task Manager!"
@@ -697,7 +766,7 @@ def main():
             print(
                 "🚀 Keep building. Keep learning."
             )
-            print("=" * 70)
+            print("=" * 75)
 
             break
 
@@ -705,7 +774,7 @@ def main():
 
             print(
                 "\n❌ Invalid choice."
-                "\nPlease select an option between 1 and 8."
+                "\nPlease select an option between 1 and 9."
             )
 
 
