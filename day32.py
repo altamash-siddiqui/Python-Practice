@@ -1,6 +1,6 @@
 """
 Day 32 - Object Oriented Programming
-Commit 6: Account Inheritance
+Commit 7: Polymorphism
 """
 
 
@@ -12,38 +12,17 @@ class BankAccount:
         self.holder_name = holder_name
         self._balance = balance
 
-    def deposit(self, amount):
+    def calculate_benefit(self):
 
-        if amount <= 0:
-            raise ValueError(
-                "Deposit amount must be positive."
-            )
-
-        self._balance += amount
-
-    def withdraw(self, amount):
-
-        if amount <= 0:
-            raise ValueError(
-                "Withdrawal amount must be positive."
-            )
-
-        if amount > self._balance:
-            raise ValueError(
-                "Insufficient balance."
-            )
-
-        self._balance -= amount
+        return 0
 
     def show_account(self):
 
-        print("\n" + "=" * 50)
-
-        print(f"Account : {self.account_number}")
-        print(f"Holder  : {self.holder_name}")
-        print(f"Balance : ₹{self._balance:.2f}")
-
-        print("=" * 50)
+        print(
+            f"{self.account_number} | "
+            f"{self.holder_name} | "
+            f"₹{self._balance:.2f}"
+        )
 
 
 class SavingsAccount(BankAccount):
@@ -52,8 +31,7 @@ class SavingsAccount(BankAccount):
         self,
         account_number,
         holder_name,
-        balance=0,
-        interest_rate=4.0
+        balance=0
     ):
 
         super().__init__(
@@ -62,17 +40,15 @@ class SavingsAccount(BankAccount):
             balance
         )
 
-        self.interest_rate = interest_rate
+        self.interest_rate = 4.0
 
-    def calculate_interest(self):
+    def calculate_benefit(self):
 
-        interest = (
+        return (
             self._balance *
             self.interest_rate /
             100
         )
-
-        return interest
 
 
 class CurrentAccount(BankAccount):
@@ -81,8 +57,7 @@ class CurrentAccount(BankAccount):
         self,
         account_number,
         holder_name,
-        balance=0,
-        minimum_balance=1000
+        balance=0
     ):
 
         super().__init__(
@@ -91,31 +66,55 @@ class CurrentAccount(BankAccount):
             balance
         )
 
-        self.minimum_balance = minimum_balance
+        self.cashback_rate = 1.0
+
+    def calculate_benefit(self):
+
+        return (
+            self._balance *
+            self.cashback_rate /
+            100
+        )
+
+
+def show_benefit(account):
+
+    benefit = account.calculate_benefit()
+
+    print(
+        f"{account.account_number} → "
+        f"Benefit: ₹{benefit:.2f}"
+    )
 
 
 def main():
 
-    savings = SavingsAccount(
-        "SAV1001",
-        "Altamash",
-        10000
-    )
+    accounts = [
 
-    current = CurrentAccount(
-        "CUR1001",
-        "Altamash",
-        15000
-    )
+        SavingsAccount(
+            "SAV1001",
+            "Altamash",
+            10000
+        ),
 
-    savings.show_account()
+        CurrentAccount(
+            "CUR1001",
+            "Altamash",
+            20000
+        )
+    ]
 
-    print(
-        f"Annual Interest: "
-        f"₹{savings.calculate_interest():.2f}"
-    )
+    print("\n" + "=" * 60)
+    print("                 ACCOUNT BENEFITS")
+    print("=" * 60)
 
-    current.show_account()
+    for account in accounts:
+
+        account.show_account()
+
+        show_benefit(account)
+
+    print("=" * 60)
 
 
 if __name__ == "__main__":
