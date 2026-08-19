@@ -1,28 +1,53 @@
 """
 Day 32 - Object Oriented Programming
-Commit 2: Encapsulation
-
-Demonstrates controlled access to account data.
+Commit 3: Banking Operations
 """
 
 
 class BankAccount:
-    """Represents a bank account with encapsulated balance."""
 
     def __init__(self, account_number, holder_name, balance=0):
+
         self.account_number = account_number
         self.holder_name = holder_name
-
-        # Protected-style internal balance
         self._balance = balance
 
     def get_balance(self):
-        """Return the current account balance."""
-
         return self._balance
 
+    def deposit(self, amount):
+
+        if amount <= 0:
+            print("❌ Deposit amount must be positive.")
+            return False
+
+        self._balance += amount
+
+        print(
+            f"✅ ₹{amount:.2f} deposited successfully."
+        )
+
+        return True
+
+    def withdraw(self, amount):
+
+        if amount <= 0:
+            print("❌ Withdrawal amount must be positive.")
+            return False
+
+        if amount > self._balance:
+            print("❌ Insufficient balance.")
+            return False
+
+        self._balance -= amount
+
+        print(
+            f"✅ ₹{amount:.2f} withdrawn successfully."
+        )
+
+        return True
+
     def show_account(self):
-        """Display account information."""
 
         print("\n" + "=" * 50)
         print("              BANK ACCOUNT")
@@ -30,7 +55,7 @@ class BankAccount:
 
         print(f"Account Number : {self.account_number}")
         print(f"Holder Name    : {self.holder_name}")
-        print(f"Balance        : ₹{self.get_balance():.2f}")
+        print(f"Balance        : ₹{self._balance:.2f}")
 
         print("=" * 50)
 
@@ -38,16 +63,18 @@ class BankAccount:
 def main():
 
     account = BankAccount(
-        account_number="ACC1001",
-        holder_name="Altamash",
-        balance=5000
+        "ACC1001",
+        "Altamash",
+        5000
     )
 
     account.show_account()
 
-    print(
-        f"\nCurrent Balance: ₹{account.get_balance():.2f}"
-    )
+    account.deposit(2500)
+
+    account.withdraw(1000)
+
+    account.show_account()
 
 
 if __name__ == "__main__":
