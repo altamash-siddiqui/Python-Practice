@@ -1,7 +1,19 @@
 """
 Day 32 - Object Oriented Programming
-Commit 3: Banking Operations
+Commit 4: Custom Exceptions
 """
+
+
+class InsufficientBalanceError(Exception):
+    """Raised when account balance is insufficient."""
+
+    pass
+
+
+class InvalidAmountError(Exception):
+    """Raised when transaction amount is invalid."""
+
+    pass
 
 
 class BankAccount:
@@ -18,34 +30,25 @@ class BankAccount:
     def deposit(self, amount):
 
         if amount <= 0:
-            print("❌ Deposit amount must be positive.")
-            return False
+            raise InvalidAmountError(
+                "Deposit amount must be greater than zero."
+            )
 
         self._balance += amount
-
-        print(
-            f"✅ ₹{amount:.2f} deposited successfully."
-        )
-
-        return True
 
     def withdraw(self, amount):
 
         if amount <= 0:
-            print("❌ Withdrawal amount must be positive.")
-            return False
+            raise InvalidAmountError(
+                "Withdrawal amount must be greater than zero."
+            )
 
         if amount > self._balance:
-            print("❌ Insufficient balance.")
-            return False
+            raise InsufficientBalanceError(
+                "Insufficient balance for this withdrawal."
+            )
 
         self._balance -= amount
-
-        print(
-            f"✅ ₹{amount:.2f} withdrawn successfully."
-        )
-
-        return True
 
     def show_account(self):
 
@@ -68,11 +71,21 @@ def main():
         5000
     )
 
-    account.show_account()
+    try:
 
-    account.deposit(2500)
+        account.deposit(2000)
 
-    account.withdraw(1000)
+        account.withdraw(1000)
+
+        account.withdraw(10000)
+
+    except InsufficientBalanceError as error:
+
+        print(f"❌ Transaction failed: {error}")
+
+    except InvalidAmountError as error:
+
+        print(f"❌ Invalid transaction: {error}")
 
     account.show_account()
 
