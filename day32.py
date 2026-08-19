@@ -1,18 +1,14 @@
 """
 Day 32 - Object Oriented Programming
-Commit 4: Custom Exceptions
+Commit 5: Transaction History
 """
 
 
 class InsufficientBalanceError(Exception):
-    """Raised when account balance is insufficient."""
-
     pass
 
 
 class InvalidAmountError(Exception):
-    """Raised when transaction amount is invalid."""
-
     pass
 
 
@@ -23,6 +19,15 @@ class BankAccount:
         self.account_number = account_number
         self.holder_name = holder_name
         self._balance = balance
+        self._transactions = []
+
+        if balance > 0:
+
+            self._transactions.append({
+                "type": "Opening Balance",
+                "amount": balance,
+                "balance": balance
+            })
 
     def get_balance(self):
         return self._balance
@@ -36,6 +41,12 @@ class BankAccount:
 
         self._balance += amount
 
+        self._transactions.append({
+            "type": "Deposit",
+            "amount": amount,
+            "balance": self._balance
+        })
+
     def withdraw(self, amount):
 
         if amount <= 0:
@@ -45,20 +56,50 @@ class BankAccount:
 
         if amount > self._balance:
             raise InsufficientBalanceError(
-                "Insufficient balance for this withdrawal."
+                "Insufficient balance."
             )
 
         self._balance -= amount
 
+        self._transactions.append({
+            "type": "Withdrawal",
+            "amount": amount,
+            "balance": self._balance
+        })
+
+    def show_transactions(self):
+
+        print("\n" + "=" * 65)
+        print("                  TRANSACTION HISTORY")
+        print("=" * 65)
+
+        if not self._transactions:
+
+            print("No transactions available.")
+
+            return
+
+        for number, transaction in enumerate(
+            self._transactions,
+            start=1
+        ):
+
+            print(
+                f"{number}. "
+                f"{transaction['type']:<18}"
+                f"₹{transaction['amount']:>10.2f}"
+                f" | Balance: ₹{transaction['balance']:.2f}"
+            )
+
+        print("=" * 65)
+
     def show_account(self):
 
         print("\n" + "=" * 50)
-        print("              BANK ACCOUNT")
-        print("=" * 50)
 
-        print(f"Account Number : {self.account_number}")
-        print(f"Holder Name    : {self.holder_name}")
-        print(f"Balance        : ₹{self._balance:.2f}")
+        print(f"Account : {self.account_number}")
+        print(f"Holder  : {self.holder_name}")
+        print(f"Balance : ₹{self._balance:.2f}")
 
         print("=" * 50)
 
@@ -74,20 +115,20 @@ def main():
     try:
 
         account.deposit(2000)
+        account.withdraw(1200)
+        account.deposit(3500)
+        account.withdraw(500)
 
-        account.withdraw(1000)
-
-        account.withdraw(10000)
-
-    except InsufficientBalanceError as error:
+    except (
+        InsufficientBalanceError,
+        InvalidAmountError
+    ) as error:
 
         print(f"❌ Transaction failed: {error}")
 
-    except InvalidAmountError as error:
-
-        print(f"❌ Invalid transaction: {error}")
-
     account.show_account()
+
+    account.show_transactions()
 
 
 if __name__ == "__main__":
