@@ -1,15 +1,7 @@
 """
 Day 32 - Object Oriented Programming
-Commit 5: Transaction History
+Commit 6: Account Inheritance
 """
-
-
-class InsufficientBalanceError(Exception):
-    pass
-
-
-class InvalidAmountError(Exception):
-    pass
 
 
 class BankAccount:
@@ -19,79 +11,29 @@ class BankAccount:
         self.account_number = account_number
         self.holder_name = holder_name
         self._balance = balance
-        self._transactions = []
-
-        if balance > 0:
-
-            self._transactions.append({
-                "type": "Opening Balance",
-                "amount": balance,
-                "balance": balance
-            })
-
-    def get_balance(self):
-        return self._balance
 
     def deposit(self, amount):
 
         if amount <= 0:
-            raise InvalidAmountError(
-                "Deposit amount must be greater than zero."
+            raise ValueError(
+                "Deposit amount must be positive."
             )
 
         self._balance += amount
 
-        self._transactions.append({
-            "type": "Deposit",
-            "amount": amount,
-            "balance": self._balance
-        })
-
     def withdraw(self, amount):
 
         if amount <= 0:
-            raise InvalidAmountError(
-                "Withdrawal amount must be greater than zero."
+            raise ValueError(
+                "Withdrawal amount must be positive."
             )
 
         if amount > self._balance:
-            raise InsufficientBalanceError(
+            raise ValueError(
                 "Insufficient balance."
             )
 
         self._balance -= amount
-
-        self._transactions.append({
-            "type": "Withdrawal",
-            "amount": amount,
-            "balance": self._balance
-        })
-
-    def show_transactions(self):
-
-        print("\n" + "=" * 65)
-        print("                  TRANSACTION HISTORY")
-        print("=" * 65)
-
-        if not self._transactions:
-
-            print("No transactions available.")
-
-            return
-
-        for number, transaction in enumerate(
-            self._transactions,
-            start=1
-        ):
-
-            print(
-                f"{number}. "
-                f"{transaction['type']:<18}"
-                f"₹{transaction['amount']:>10.2f}"
-                f" | Balance: ₹{transaction['balance']:.2f}"
-            )
-
-        print("=" * 65)
 
     def show_account(self):
 
@@ -104,31 +46,76 @@ class BankAccount:
         print("=" * 50)
 
 
+class SavingsAccount(BankAccount):
+
+    def __init__(
+        self,
+        account_number,
+        holder_name,
+        balance=0,
+        interest_rate=4.0
+    ):
+
+        super().__init__(
+            account_number,
+            holder_name,
+            balance
+        )
+
+        self.interest_rate = interest_rate
+
+    def calculate_interest(self):
+
+        interest = (
+            self._balance *
+            self.interest_rate /
+            100
+        )
+
+        return interest
+
+
+class CurrentAccount(BankAccount):
+
+    def __init__(
+        self,
+        account_number,
+        holder_name,
+        balance=0,
+        minimum_balance=1000
+    ):
+
+        super().__init__(
+            account_number,
+            holder_name,
+            balance
+        )
+
+        self.minimum_balance = minimum_balance
+
+
 def main():
 
-    account = BankAccount(
-        "ACC1001",
+    savings = SavingsAccount(
+        "SAV1001",
         "Altamash",
-        5000
+        10000
     )
 
-    try:
+    current = CurrentAccount(
+        "CUR1001",
+        "Altamash",
+        15000
+    )
 
-        account.deposit(2000)
-        account.withdraw(1200)
-        account.deposit(3500)
-        account.withdraw(500)
+    savings.show_account()
 
-    except (
-        InsufficientBalanceError,
-        InvalidAmountError
-    ) as error:
+    print(
+        f"Annual Interest: "
+        f"₹{savings.calculate_interest():.2f}"
+    )
 
-        print(f"❌ Transaction failed: {error}")
-
-    account.show_account()
-
-    account.show_transactions()
+    current.show_account()
 
 
 if __name__ == "__main__":
