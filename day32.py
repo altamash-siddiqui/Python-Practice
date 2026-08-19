@@ -1,6 +1,6 @@
 """
 Day 32 - Python OOP
-Commit 8: Complete Banking System
+Commit 9: Factory Method with Classmethod
 
 Concepts:
 - Classes & Objects
@@ -10,20 +10,32 @@ Concepts:
 - Custom Exceptions
 - Transaction History
 - Class Methods
+- Factory Method Pattern
 """
 
 
+# ============================================================
+# CUSTOM EXCEPTIONS
+# ============================================================
+
 class InsufficientBalanceError(Exception):
     """Raised when withdrawal exceeds available balance."""
-
     pass
 
 
 class InvalidAmountError(Exception):
     """Raised when transaction amount is invalid."""
-
     pass
 
+
+class DuplicateAccountError(Exception):
+    """Raised when an account already exists."""
+    pass
+
+
+# ============================================================
+# BASE ACCOUNT
+# ============================================================
 
 class BankAccount:
 
@@ -49,9 +61,39 @@ class BankAccount:
                 balance
             )
 
-    # --------------------------------------------------------
-    # TRANSACTION RECORDING
-    # --------------------------------------------------------
+    # ========================================================
+    # FACTORY METHOD
+    # ========================================================
+
+    @classmethod
+    def create_account(
+        cls,
+        account_number,
+        holder_name,
+        initial_deposit=0
+    ):
+        """
+        Factory method for creating an account.
+
+        Using cls instead of the class name makes
+        this method reusable by child classes.
+        """
+
+        if initial_deposit < 0:
+
+            raise InvalidAmountError(
+                "Initial deposit cannot be negative."
+            )
+
+        return cls(
+            account_number,
+            holder_name,
+            initial_deposit
+        )
+
+    # ========================================================
+    # INTERNAL TRANSACTION LOGGER
+    # ========================================================
 
     def _record_transaction(
         self,
@@ -60,23 +102,26 @@ class BankAccount:
     ):
 
         self._transactions.append({
+
             "type": transaction_type,
+
             "amount": amount,
+
             "balance": self._balance
         })
 
-    # --------------------------------------------------------
-    # BALANCE
-    # --------------------------------------------------------
+    # ========================================================
+    # BALANCE PROPERTY
+    # ========================================================
 
     @property
     def balance(self):
 
         return self._balance
 
-    # --------------------------------------------------------
+    # ========================================================
     # DEPOSIT
-    # --------------------------------------------------------
+    # ========================================================
 
     def deposit(self, amount):
 
@@ -93,9 +138,9 @@ class BankAccount:
             amount
         )
 
-    # --------------------------------------------------------
+    # ========================================================
     # WITHDRAW
-    # --------------------------------------------------------
+    # ========================================================
 
     def withdraw(self, amount):
 
@@ -118,17 +163,17 @@ class BankAccount:
             amount
         )
 
-    # --------------------------------------------------------
-    # POLYMORPHIC BENEFIT
-    # --------------------------------------------------------
+    # ========================================================
+    # BENEFIT
+    # ========================================================
 
     def calculate_benefit(self):
 
         return 0
 
-    # --------------------------------------------------------
+    # ========================================================
     # ACCOUNT DISPLAY
-    # --------------------------------------------------------
+    # ========================================================
 
     def show_account(self):
 
@@ -136,27 +181,48 @@ class BankAccount:
         print("                    ACCOUNT")
         print("=" * 60)
 
-        print(f"Bank           : {self.bank_name}")
-        print(f"Account Number : {self.account_number}")
-        print(f"Holder         : {self.holder_name}")
-        print(f"Account Type   : {self.__class__.__name__}")
-        print(f"Balance        : ₹{self._balance:.2f}")
+        print(
+            f"Bank           : "
+            f"{self.bank_name}"
+        )
+
+        print(
+            f"Account Number : "
+            f"{self.account_number}"
+        )
+
+        print(
+            f"Holder         : "
+            f"{self.holder_name}"
+        )
+
+        print(
+            f"Account Type   : "
+            f"{self.__class__.__name__}"
+        )
+
+        print(
+            f"Balance        : "
+            f"₹{self._balance:.2f}"
+        )
 
         print("=" * 60)
 
-    # --------------------------------------------------------
+    # ========================================================
     # TRANSACTION HISTORY
-    # --------------------------------------------------------
+    # ========================================================
 
     def show_transactions(self):
 
         print("\n" + "=" * 75)
-        print("                    TRANSACTION HISTORY")
+        print("                 TRANSACTION HISTORY")
         print("=" * 75)
 
         if not self._transactions:
 
-            print("No transactions available.")
+            print(
+                "No transactions available."
+            )
 
             return
 
@@ -176,9 +242,34 @@ class BankAccount:
         print("=" * 75)
 
 
+# ============================================================
+# SAVINGS ACCOUNT
+# ============================================================
+
 class SavingsAccount(BankAccount):
 
     interest_rate = 4.0
+
+    @classmethod
+    def create_account(
+        cls,
+        account_number,
+        holder_name,
+        initial_deposit=0
+    ):
+
+        if initial_deposit < 1000:
+
+            raise InvalidAmountError(
+                "Savings Account requires "
+                "minimum ₹1000 initial deposit."
+            )
+
+        return cls(
+            account_number,
+            holder_name,
+            initial_deposit
+        )
 
     def calculate_benefit(self):
 
@@ -189,9 +280,34 @@ class SavingsAccount(BankAccount):
         )
 
 
+# ============================================================
+# CURRENT ACCOUNT
+# ============================================================
+
 class CurrentAccount(BankAccount):
 
     cashback_rate = 1.0
+
+    @classmethod
+    def create_account(
+        cls,
+        account_number,
+        holder_name,
+        initial_deposit=0
+    ):
+
+        if initial_deposit < 5000:
+
+            raise InvalidAmountError(
+                "Current Account requires "
+                "minimum ₹5000 initial deposit."
+            )
+
+        return cls(
+            account_number,
+            holder_name,
+            initial_deposit
+        )
 
     def calculate_benefit(self):
 
@@ -202,26 +318,31 @@ class CurrentAccount(BankAccount):
         )
 
 
+# ============================================================
+# BANK
+# ============================================================
+
 class Bank:
 
     def __init__(self, name):
 
         self.name = name
+
         self.accounts = {}
 
-    # --------------------------------------------------------
-    # CREATE ACCOUNT
-    # --------------------------------------------------------
+    # ========================================================
+    # REGISTER ACCOUNT
+    # ========================================================
 
-    def add_account(self, account):
+    def register_account(self, account):
 
         if account.account_number in self.accounts:
 
-            print(
-                "❌ Account already exists."
+            raise DuplicateAccountError(
+                f"Account "
+                f"{account.account_number} "
+                f"already exists."
             )
-
-            return False
 
         self.accounts[
             account.account_number
@@ -229,14 +350,13 @@ class Bank:
 
         print(
             f"✅ Account "
-            f"{account.account_number} created."
+            f"{account.account_number} "
+            f"registered successfully."
         )
 
-        return True
-
-    # --------------------------------------------------------
+    # ========================================================
     # FIND ACCOUNT
-    # --------------------------------------------------------
+    # ========================================================
 
     def find_account(self, account_number):
 
@@ -244,72 +364,125 @@ class Bank:
             account_number
         )
 
-    # --------------------------------------------------------
-    # SHOW ALL ACCOUNTS
-    # --------------------------------------------------------
+    # ========================================================
+    # BANK OVERVIEW
+    # ========================================================
 
     def show_accounts(self):
 
-        print("\n" + "=" * 75)
-        print("                      BANK ACCOUNTS")
-        print("=" * 75)
+        print("\n" + "=" * 80)
+        print("                       BANK OVERVIEW")
+        print("=" * 80)
 
         if not self.accounts:
 
-            print("No accounts registered.")
+            print(
+                "No accounts registered."
+            )
 
             return
+
+        print(
+            f"{'Account':<15}"
+            f"{'Holder':<20}"
+            f"{'Type':<20}"
+            f"{'Balance':>15}"
+        )
+
+        print("-" * 80)
 
         for account in self.accounts.values():
 
             print(
-                f"{account.account_number:<12}"
+                f"{account.account_number:<15}"
                 f"{account.holder_name:<20}"
-                f"{account.__class__.__name__:<18}"
-                f"₹{account.balance:>10.2f}"
+                f"{account.__class__.__name__:<20}"
+                f"₹{account.balance:>13.2f}"
             )
 
-        print("=" * 75)
+        print("=" * 80)
 
+
+# ============================================================
+# DEMO
+# ============================================================
 
 def main():
+
+    print("\n" + "=" * 75)
+    print("             PYTHON NATIONAL BANK")
+    print("              OOP BANKING SYSTEM")
+    print("=" * 75)
 
     bank = Bank(
         "Python National Bank"
     )
 
-    # --------------------------------------------------------
-    # CREATE ACCOUNTS
-    # --------------------------------------------------------
+    # ========================================================
+    # CREATE SAVINGS ACCOUNT USING FACTORY METHOD
+    # ========================================================
 
-    savings = SavingsAccount(
-        "SAV1001",
-        "Altamash",
-        10000
-    )
+    try:
 
-    current = CurrentAccount(
-        "CUR1001",
-        "Altamash",
-        25000
-    )
+        savings = SavingsAccount.create_account(
+            account_number="SAV2001",
+            holder_name="Altamash",
+            initial_deposit=10000
+        )
 
-    bank.add_account(savings)
-    bank.add_account(current)
+        bank.register_account(
+            savings
+        )
 
-    # --------------------------------------------------------
-    # TRANSACTIONS
-    # --------------------------------------------------------
+    except (
+        InvalidAmountError,
+        DuplicateAccountError
+    ) as error:
+
+        print(
+            f"❌ Account creation failed: "
+            f"{error}"
+        )
+
+    # ========================================================
+    # CREATE CURRENT ACCOUNT
+    # ========================================================
+
+    try:
+
+        current = CurrentAccount.create_account(
+            account_number="CUR2001",
+            holder_name="Altamash",
+            initial_deposit=25000
+        )
+
+        bank.register_account(
+            current
+        )
+
+    except (
+        InvalidAmountError,
+        DuplicateAccountError
+    ) as error:
+
+        print(
+            f"❌ Account creation failed: "
+            f"{error}"
+        )
+
+    # ========================================================
+    # PERFORM TRANSACTIONS
+    # ========================================================
 
     try:
 
         savings.deposit(5000)
 
-        savings.withdraw(2500)
+        savings.withdraw(2000)
 
         current.deposit(10000)
 
-        current.withdraw(4000)
+        current.withdraw(5000)
 
     except (
         InvalidAmountError,
@@ -317,52 +490,60 @@ def main():
     ) as error:
 
         print(
-            f"❌ Transaction failed: {error}"
+            f"❌ Transaction failed: "
+            f"{error}"
         )
 
-    # --------------------------------------------------------
-    # ACCOUNT INFORMATION
-    # --------------------------------------------------------
+    # ========================================================
+    # DISPLAY ACCOUNTS
+    # ========================================================
 
     savings.show_account()
 
     current.show_account()
 
-    # --------------------------------------------------------
-    # POLYMORPHISM
-    # --------------------------------------------------------
+    # ========================================================
+    # POLYMORPHIC BENEFITS
+    # ========================================================
 
     print("\n" + "=" * 60)
-    print("                    BENEFITS")
+    print("                  ACCOUNT BENEFITS")
     print("=" * 60)
 
-    accounts = [
-        savings,
-        current
-    ]
+    for account in bank.accounts.values():
 
-    for account in accounts:
+        benefit = (
+            account.calculate_benefit()
+        )
 
         print(
             f"{account.account_number} "
-            f"→ Benefit: "
-            f"₹{account.calculate_benefit():.2f}"
+            f"→ ₹{benefit:.2f}"
         )
 
-    # --------------------------------------------------------
+    # ========================================================
     # TRANSACTION HISTORY
-    # --------------------------------------------------------
+    # ========================================================
 
     savings.show_transactions()
 
     current.show_transactions()
 
-    # --------------------------------------------------------
+    # ========================================================
     # BANK OVERVIEW
-    # --------------------------------------------------------
+    # ========================================================
 
     bank.show_accounts()
 
+    print("\n" + "=" * 75)
+    print("                  SYSTEM COMPLETE")
+    print("=" * 75)
+
+
+# ============================================================
+# PROGRAM ENTRY POINT
+# ============================================================
 
 if __name__ == "__main__":
+
     main()
