@@ -46,6 +46,21 @@ class BankAnalytics:
             len(account._transactions)
             for account in self.bank.accounts.values()
         )
+        
+    def account_type_summary(self):
+        """Return account counts grouped by type."""
+
+        summary = {}
+
+        for account in self.bank.accounts.values():
+
+            account_type = account.__class__.__name__
+
+            summary[account_type] = (
+                summary.get(account_type, 0) + 1
+            )
+
+        return summary
 
 
 if __name__ == "__main__":
@@ -93,3 +108,12 @@ if __name__ == "__main__":
         f"Total Transactions: "
         f"{analytics.transaction_count()}"
     )
+    
+    print("\nAccount Type Summary:")
+
+    for account_type, count in (
+        analytics.account_type_summary().items()
+    ):
+        print(
+            f"{account_type}: {count}"
+        )
