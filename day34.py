@@ -61,6 +61,21 @@ class BankAnalytics:
             )
 
         return summary
+    
+    def highest_balance_account(self):
+        """Return account with the highest balance."""
+
+        accounts = list(
+            self.bank.accounts.values()
+        )
+
+        if not accounts:
+            return None
+
+        return max(
+            accounts,
+            key=lambda account: account.balance
+        )
 
 
 if __name__ == "__main__":
@@ -116,4 +131,22 @@ if __name__ == "__main__":
     ):
         print(
             f"{account_type}: {count}"
+        )
+        
+        highest = analytics.highest_balance_account()
+
+    if highest:
+
+        print("\nHighest Balance Account:")
+
+        print(
+            f"Account: {highest.account_number}"
+        )
+
+        print(
+            f"Holder: {highest.holder_name}"
+        )
+
+        print(
+            f"Balance: ₹{highest.balance:.2f}"
         )
