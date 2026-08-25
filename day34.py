@@ -38,6 +38,14 @@ class BankAnalytics:
             return 0
 
         return self.total_balance() / count
+    
+    def transaction_count(self):
+        """Return total number of recorded transactions."""
+
+        return sum(
+            len(account._transactions)
+            for account in self.bank.accounts.values()
+        )
 
 
 if __name__ == "__main__":
@@ -58,6 +66,11 @@ if __name__ == "__main__":
 
     bank.register_account(savings)
     bank.register_account(current)
+    
+    savings.deposit(2000)
+    savings.withdraw(1000)
+
+    current.deposit(5000)
 
     analytics = BankAnalytics(bank)
 
@@ -74,4 +87,9 @@ if __name__ == "__main__":
     print(
         f"Average Balance: "
         f"₹{analytics.average_balance():.2f}"
+    )
+    
+    print(
+        f"Total Transactions: "
+        f"{analytics.transaction_count()}"
     )
