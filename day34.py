@@ -28,6 +28,16 @@ class BankAnalytics:
             account.balance
             for account in self.bank.accounts.values()
         )
+        
+    def average_balance(self):
+        """Return average account balance."""
+
+        count = self.account_count()
+
+        if count == 0:
+            return 0
+
+        return self.total_balance() / count
 
 
 if __name__ == "__main__":
@@ -59,4 +69,9 @@ if __name__ == "__main__":
     print(
         f"Total Balance: "
         f"₹{analytics.total_balance():.2f}"
+    )
+    
+    print(
+        f"Average Balance: "
+        f"₹{analytics.average_balance():.2f}"
     )
