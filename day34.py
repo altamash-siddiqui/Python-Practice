@@ -76,6 +76,59 @@ class BankAnalytics:
             accounts,
             key=lambda account: account.balance
         )
+        
+    def generate_report(self):
+        """Generate a complete bank analytics report."""
+
+        highest = self.highest_balance_account()
+
+        print("\n" + "=" * 60)
+        print("           BANK ANALYTICS REPORT")
+        print("=" * 60)
+
+        print(
+            f"Total Accounts     : "
+            f"{self.account_count()}"
+        )
+
+        print(
+            f"Total Balance      : "
+            f"₹{self.total_balance():.2f}"
+        )
+
+        print(
+            f"Average Balance    : "
+            f"₹{self.average_balance():.2f}"
+        )
+
+        print(
+            f"Total Transactions : "
+            f"{self.transaction_count()}"
+        )
+
+        print("\nAccount Types:")
+
+        for account_type, count in (
+            self.account_type_summary().items()
+        ):
+            print(
+                f"  {account_type}: {count}"
+            )
+
+        if highest:
+
+            print("\nHighest Balance:")
+
+            print(
+                f"  {highest.account_number} - "
+                f"{highest.holder_name}"
+            )
+
+            print(
+                f"  ₹{highest.balance:.2f}"
+            )
+
+        print("=" * 60)
 
 
 if __name__ == "__main__":
@@ -150,3 +203,5 @@ if __name__ == "__main__":
         print(
             f"Balance: ₹{highest.balance:.2f}"
         )
+        
+        analytics.generate_report()
